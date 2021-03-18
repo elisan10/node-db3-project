@@ -1,3 +1,4 @@
+const { whereNotExists } = require("../../data/db-config");
 const db = require("../../data/db-config");
 
 function find() {
@@ -101,41 +102,11 @@ async function findById(scheme_id) {
       }
   */
 
-  // const stepsObj = {
-  //   scheme_id: "schemes.scheme_id",
-  //   scheme_name: "schemes.scheme_name",
-  //   steps: [
-  //     {
-  //       step_id: "steps.step_id",
-  //       step_number: "steps.step_number",
-  //       instructions: "steps.instructions",
-  //     },
-  //   ],
-  // };
-
-  // const steps = {
-  //   step_id: "steps.step_id",
-  //   step_number: "steps.step_number",
-  //   instructions: "steps.instructions",
-  // };
-
-  // return db("schemes as sc")
-  //   .select("sc.scheme_name", "st.*")
-  //   .leftJoin("steps as st", "sc.scheme_id", "st.scheme_id")
-  //   .where("sc.scheme_id", scheme_id)
-  //   .orderBy("st.step_number", "asc")
-  //   .first();
   const schemeData = await db("schemes as sc")
     .select(["sc.scheme_id", "sc.scheme_name", "steps.*"])
     .leftJoin("steps", "sc.scheme_id", "steps.scheme_id")
     .where("sc.scheme_id", scheme_id)
     .orderBy("steps.step_number", "asc");
-
-  // const result = schemeData.find((scheme) => {
-  //   // console.log("hello scheme", scheme);
-  //   // console.log("scheme", scheme_id);
-  //   scheme.scheme_id === 3;
-  // });
 
   const stepsArray = schemeData.map((step) => {
     // console.log("This is step", step);
@@ -162,57 +133,9 @@ async function findById(scheme_id) {
     };
     return emptyStepsArray;
   }
-
-  // console.log(result);
-  // const schemeLayout = {
-  //   scheme_id: scheme_id,
-  //   scheme_name: schemeData.scheme_name,
-  //   steps: stepsArray,
-  // };
-
-  // return schemeLayout;
-  // const reducer = schemeData.reduce((acc, scheme) => {
-  //   // schemeData 3
-  //   // variable instantiate {empty}
-  //   //  if variable is empty
-  //   //  add schema
-  //   // if its filled
-  //   // return var
-
-  //   return acc.includes({
-  //     scheme_id: scheme.scheme_id,
-  //     scheme_name: scheme.scheme_name,
-  //     steps: stepsArray,
-  //   })
-  //     ? acc
-  //     : acc.concat({
-  //         scheme_id: scheme.scheme_id,
-  //         scheme_name: scheme.scheme_name,
-  //         steps: stepsArray,
-  //       });
-  // }, []);
-
-  // console.log(allData);
-  // const dataObj = (allData) => {
-  //   const layout =
-  //     // scheme_id: allData.scheme_id,
-  //     // scheme_name: allData.scheme_name,
-  //     // steps: [
-  //       allData.map((step) => {
-  //         return {
-  //           step_id: step.step_id,
-  //           step_number: step.step_number,
-  //           instructions: step.instructions,
-  //         };
-  //         console.log(layout);
-  //       }),
-  //     // ],
-  //   };
-  // console.log({ schemeLayout });
-  // return schemeLayout;
 }
 
-function findSteps(scheme_id) {
+async function findSteps(scheme_id) {
   // EXERCISE C
   /*
     1C- Build a query in Knex that returns the following data.
@@ -234,22 +157,45 @@ function findSteps(scheme_id) {
         }
       ]
   */
+
+  const steps = await db("schemes as sc")
+    .select("st.step_id", "st.step_number", "st.instructions", "sc.scheme_name")
+    .join("steps as st", "sc.scheme_id", "st.scheme_id")
+    .where("sc.scheme_id", scheme_id)
+    .orderBy("st.step_number", "asc");
+
+  return steps;
 }
 
-function add(scheme) {
+async function add(scheme) {
   // EXERCISE D
   /*
     1D- This function creates a new scheme and resolves to _the newly created scheme_.
   */
+  const newId = await db("schemes as sc").insert(scheme);
+
+  return db("schemes as sc")
+    .column("scheme_id", "scheme_name")
+    .where("sc.scheme_id", newId);
 }
 
-function addStep(scheme_id, step) {
+async function addStep(scheme_id, step) {
   // EXERCISE E
   /*
     1E- This function adds a step to the scheme with the given `scheme_id`
     and resolves to _all the steps_ belonging to the given `scheme_id`,
     including the newly created one.
   */
+
+  await db("steps as st")
+    .insert({
+      step_number: step.step_number,
+      instructions: step.instructions,
+      scheme_id: scheme_id,
+    })
+    .orderBy("st.step_number", "asc");
+
+  return findSteps(scheme_id);
 }
 
 module.exports = {
