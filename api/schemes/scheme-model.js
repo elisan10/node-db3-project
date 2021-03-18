@@ -33,7 +33,7 @@ function find() {
   );
 }
 
-function findById(scheme_id) {
+async function findById(scheme_id) {
   // EXERCISE B
   /*
     1B- Study the SQL query below running it in SQLite Studio against `data/schemes.db3`:
@@ -100,6 +100,116 @@ function findById(scheme_id) {
         "steps": []
       }
   */
+
+  // const stepsObj = {
+  //   scheme_id: "schemes.scheme_id",
+  //   scheme_name: "schemes.scheme_name",
+  //   steps: [
+  //     {
+  //       step_id: "steps.step_id",
+  //       step_number: "steps.step_number",
+  //       instructions: "steps.instructions",
+  //     },
+  //   ],
+  // };
+
+  // const steps = {
+  //   step_id: "steps.step_id",
+  //   step_number: "steps.step_number",
+  //   instructions: "steps.instructions",
+  // };
+
+  // return db("schemes as sc")
+  //   .select("sc.scheme_name", "st.*")
+  //   .leftJoin("steps as st", "sc.scheme_id", "st.scheme_id")
+  //   .where("sc.scheme_id", scheme_id)
+  //   .orderBy("st.step_number", "asc")
+  //   .first();
+  const schemeData = await db("schemes as sc")
+    .select(["sc.scheme_id", "sc.scheme_name", "steps.*"])
+    .leftJoin("steps", "sc.scheme_id", "steps.scheme_id")
+    .where("sc.scheme_id", scheme_id)
+    .orderBy("steps.step_number", "asc");
+
+  // const result = schemeData.find((scheme) => {
+  //   // console.log("hello scheme", scheme);
+  //   // console.log("scheme", scheme_id);
+  //   scheme.scheme_id === 3;
+  // });
+
+  const stepsArray = schemeData.map((step) => {
+    // console.log("This is step", step);
+    return {
+      step_id: step.step_id,
+      step_number: step.step_number,
+      instructions: step.instructions,
+    };
+  });
+
+  if (schemeData[0].scheme_id !== null) {
+    const schemeLayout = {
+      scheme_id: schemeData[0].scheme_id,
+      scheme_name: schemeData[0].scheme_name,
+      steps: stepsArray,
+    };
+
+    return schemeLayout;
+  } else {
+    const emptyStepsArray = {
+      scheme_id: schemeData[0].scheme_id,
+      scheme_name: schemeData[0].scheme_name,
+      steps: [],
+    };
+    return emptyStepsArray;
+  }
+
+  // console.log(result);
+  // const schemeLayout = {
+  //   scheme_id: scheme_id,
+  //   scheme_name: schemeData.scheme_name,
+  //   steps: stepsArray,
+  // };
+
+  // return schemeLayout;
+  // const reducer = schemeData.reduce((acc, scheme) => {
+  //   // schemeData 3
+  //   // variable instantiate {empty}
+  //   //  if variable is empty
+  //   //  add schema
+  //   // if its filled
+  //   // return var
+
+  //   return acc.includes({
+  //     scheme_id: scheme.scheme_id,
+  //     scheme_name: scheme.scheme_name,
+  //     steps: stepsArray,
+  //   })
+  //     ? acc
+  //     : acc.concat({
+  //         scheme_id: scheme.scheme_id,
+  //         scheme_name: scheme.scheme_name,
+  //         steps: stepsArray,
+  //       });
+  // }, []);
+
+  // console.log(allData);
+  // const dataObj = (allData) => {
+  //   const layout =
+  //     // scheme_id: allData.scheme_id,
+  //     // scheme_name: allData.scheme_name,
+  //     // steps: [
+  //       allData.map((step) => {
+  //         return {
+  //           step_id: step.step_id,
+  //           step_number: step.step_number,
+  //           instructions: step.instructions,
+  //         };
+  //         console.log(layout);
+  //       }),
+  //     // ],
+  //   };
+  // console.log({ schemeLayout });
+  // return schemeLayout;
 }
 
 function findSteps(scheme_id) {
